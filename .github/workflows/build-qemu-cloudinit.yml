@@ -42,14 +42,23 @@ jobs:
 
       - name: Locate build output
         run: |
-          ls -la /tmp/vyos-*-qemu.qcow2
-          echo "QCOW2_PATH=$(ls /tmp/vyos-*-qemu.qcow2 | head -1)" >> "$GITHUB_ENV"
+          echo "--- full /tmp listing ---"
+          sudo ls -la /tmp/
+          echo "--- searching for qcow2 ---"
+          FOUND=$(sudo find /tmp -maxdepth 1 -iname "*.qcow2" 2>/dev/null | head -1)
+          if [ -z "$FOUND" ]; then
+            echo "No .qcow2 file found anywhere in /tmp - see listing above"
+            exit 1
+          fi
+          echo "Found: $FOUND"
+          sudo chmod a+r "$FOUND"
+          echo "QCOW2_PATH=$FOUND" >> "$GITHUB_ENV"
 
       - name: Upload qcow2 artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vyos-cloudinit-qcow2
-          path: /tmp/vyos-*-qemu.qcow2
+          path: /tmp/*.qcow2
           if-no-files-found: warn
           retention-days: 14
