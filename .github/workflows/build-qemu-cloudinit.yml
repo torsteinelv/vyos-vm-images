@@ -1,0 +1,56 @@
+name: Build QEMU qcow2 with cloud-init
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix-rolling-2026
+    paths:
+      - "qemu.yml"
+      - "roles/**"
+      - "templates/**"
+      - "files/**"
+      - ".github/workflows/build-qemu-cloudinit.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Download latest VyOS rolling ISO from vyos-lts-build releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo torsteinelv/vyos-lts-build --pattern '*-generic-amd64.iso' --dir /tmp
+          ls -la /tmp/*.iso
+          echo "ISO_PATH=$(ls /tmp/*-generic-amd64.iso | head -1)" >> "$GITHUB_ENV"
+
+      - name: Build qcow2 with cloud-init (NoCloud)
+        run: |
+          sudo ansible-playbook qemu.yml \
+            -e disk_size=4 \
+            -e iso_local="${ISO_PATH}" \
+            -e grub_console=serial \
+            -e cloud_init=true \
+            -e cloud_init_ds=NoCloud \
+            -e keep_user=true
+
+      - name: Locate build output
+        run: |
+          ls -la /tmp/vyos-*-qemu.qcow2
+          echo "QCOW2_PATH=$(ls /tmp/vyos-*-qemu.qcow2 | head -1)" >> "$GITHUB_ENV"
+
+      - name: Upload qcow2 artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vyos-cloudinit-qcow2
+          path: /tmp/vyos-*-qemu.qcow2
+          if-no-files-found: warn
+          retention-days: 14
