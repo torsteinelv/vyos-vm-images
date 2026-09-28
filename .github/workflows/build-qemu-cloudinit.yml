@@ -24,13 +24,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible
 
-      - name: Download latest official VyOS stream/nightly ISO
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Download VyOS Stream ISO (base OS), cloud-init still sourced from public rolling repo
         run: |
-          gh release download --repo vyos/vyos-nightly-build --pattern '*-generic-amd64.iso' --dir /tmp
-          ls -la /tmp/*.iso
-          echo "ISO_PATH=$(ls /tmp/*-generic-amd64.iso | head -1)" >> "$GITHUB_ENV"
+          curl -fL -o /tmp/vyos-stream.iso "https://community-downloads.vyos.dev/stream/2026.03/vyos-2026.03-generic-amd64.iso"
+          ls -la /tmp/vyos-stream.iso
+          echo "ISO_PATH=/tmp/vyos-stream.iso" >> "$GITHUB_ENV"
 
       - name: Build qcow2 with cloud-init (NoCloud)
         run: |
