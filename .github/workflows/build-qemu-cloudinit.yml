@@ -43,7 +43,7 @@ jobs:
             -e keep_user=true 2>&1 | tee /tmp/ansible-build.log
           RC=${PIPESTATUS[0]}
           if [ "$RC" -ne 0 ]; then
-            FAILMSG=$(grep -A5 "BUILD FAILED" /tmp/ansible-build.log | tr '\n' ' ' || true)
+            FAILMSG=$(grep -A80 "BUILD FAILED" /tmp/ansible-build.log | tr '\n' ' ' || true)
             if [ -z "$FAILMSG" ]; then
               FAILMSG="ansible-playbook exited $RC with no BUILD FAILED message - check ansible-build-log artifact"
             fi
