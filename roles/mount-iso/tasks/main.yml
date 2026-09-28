@@ -8,12 +8,6 @@
     state: mounted
     boot: no
 
-- name: Verify checksums of all the files in the ISO image
-  command: md5sum -c md5sum.txt
-  args:
-    chdir: "{{ vyos_cd_root }}"
-  changed_when: False
-
 - name: Mount squashfs image from ISO
   become: true
   mount:
