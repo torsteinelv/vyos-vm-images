@@ -74,6 +74,61 @@ jobs:
           sudo chmod a+r "$FOUND"
           echo "QCOW2_PATH=$FOUND" >> "$GITHUB_ENV"
 
+      - name: Boot-test the qcow2 in plain QEMU (no Proxmox involved)
+        run: |
+          set -e
+          sudo apt-get install -y qemu-system-x86
+          cp "$QCOW2_PATH" /tmp/boot-test.qcow2
+
+          if [ -e /dev/kvm ]; then
+            ACCEL_OPTS="-enable-kvm -cpu host"
+          else
+            echo "No /dev/kvm - falling back to TCG (slower, longer timeout budget)"
+            ACCEL_OPTS="-cpu qemu64"
+          fi
+
+          sudo timeout 170 qemu-system-x86_64 \
+            -m 2048 -smp 2 $ACCEL_OPTS \
+            -nographic \
+            -drive file=/tmp/boot-test.qcow2,format=qcow2,if=virtio \
+            -netdev user,id=net0 -device virtio-net-pci,netdev=net0 \
+            > /tmp/boot-test.log 2>&1 &
+          QEMU_PID=$!
+
+          SUCCESS=0
+          for i in $(seq 1 80); do
+            if ! kill -0 "$QEMU_PID" 2>/dev/null; then
+              break
+            fi
+            if sudo grep -qi "login:" /tmp/boot-test.log 2>/dev/null; then
+              SUCCESS=1
+              break
+            fi
+            sleep 2
+          done
+
+          sudo kill "$QEMU_PID" 2>/dev/null || true
+          wait "$QEMU_PID" 2>/dev/null || true
+
+          echo "--- boot-test.log ---"
+          sudo cat /tmp/boot-test.log || true
+          echo "--- end boot-test.log ---"
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "::error::qcow2 never reached a login prompt in plain QEMU (no Proxmox involved) - the image itself is broken, not a Proxmox console/serial config issue"
+            exit 1
+          fi
+          echo "Boot test passed - reached a login prompt"
+
+      - name: Upload boot-test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot-test-log
+          path: /tmp/boot-test.log
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload qcow2 artifact
         if: always()
         uses: actions/upload-artifact@v4
