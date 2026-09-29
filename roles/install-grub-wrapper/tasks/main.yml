@@ -6,4 +6,4 @@
 - name: Select GRUB for installer for VyOS >=1.4
   include_role:
     name: install-grub-v2
-  when: vyos_version is regex("^1\.[4-9].*$")
+  when: not (vyos_version is regex("^1\.[2-3].*$"))
