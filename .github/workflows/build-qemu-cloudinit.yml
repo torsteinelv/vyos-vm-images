@@ -40,7 +40,8 @@ jobs:
             -e grub_console=serial \
             -e cloud_init=true \
             -e cloud_init_ds=NoCloud \
-            -e keep_user=true 2>&1 | tee /tmp/ansible-build.log
+            -e keep_user=true \
+            -e guest_agent=qemu 2>&1 | tee /tmp/ansible-build.log
           RC=${PIPESTATUS[0]}
           if [ "$RC" -ne 0 ]; then
             FAILMSG=$(grep -A80 "BUILD FAILED" /tmp/ansible-build.log | tr '\n' ' ' || true)
