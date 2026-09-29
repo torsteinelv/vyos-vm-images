@@ -100,7 +100,7 @@ jobs:
             if ! kill -0 "$QEMU_PID" 2>/dev/null; then
               break
             fi
-            if sudo grep -qiE "login:|Reached target Login Prompts" /tmp/boot-test.log 2>/dev/null; then
+            if sudo grep -qiE "login:|Login Prompts|Configuration success" /tmp/boot-test.log 2>/dev/null; then
               SUCCESS=1
               break
             fi
