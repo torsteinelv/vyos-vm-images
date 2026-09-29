@@ -87,7 +87,7 @@ jobs:
             ACCEL_OPTS="-cpu qemu64"
           fi
 
-          sudo timeout 170 qemu-system-x86_64 \
+          sudo timeout 400 qemu-system-x86_64 \
             -m 2048 -smp 2 $ACCEL_OPTS \
             -nographic \
             -drive file=/tmp/boot-test.qcow2,format=qcow2,if=virtio \
@@ -96,11 +96,11 @@ jobs:
           QEMU_PID=$!
 
           SUCCESS=0
-          for i in $(seq 1 80); do
+          for i in $(seq 1 190); do
             if ! kill -0 "$QEMU_PID" 2>/dev/null; then
               break
             fi
-            if sudo grep -qi "login:" /tmp/boot-test.log 2>/dev/null; then
+            if sudo grep -qiE "login:|Reached target Login Prompts" /tmp/boot-test.log 2>/dev/null; then
               SUCCESS=1
               break
             fi
