@@ -24,11 +24,11 @@
   command: chroot {{ vyos_install_root }} apt-get update
 - name: Install qemu-guest-agent
   become: true
-  command: chroot {{ vyos_install_root }} apt-get -t {{ vyos_branch | default('current') }} install -y qemu-guest-agent
+  command: chroot {{ vyos_install_root }} apt-get -t {{ vyos_branch | default('rolling') }} install -y qemu-guest-agent
   when: guest_agent == "qemu"
 - name: Install open-vm-tools
   become: true
-  command: chroot {{ vyos_install_root }} apt-get -t {{ vyos_branch | default('current') }} install -y open-vm-tools
+  command: chroot {{ vyos_install_root }} apt-get -t {{ vyos_branch | default('rolling') }} install -y open-vm-tools
   when: guest_agent == "vmware"
 - name: apt-get clean
   become: true
